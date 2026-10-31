@@ -48,7 +48,7 @@ export function comboMultiplier(n) {
   if (n <= 1) return 1;
   if (n === 2) return 1.5;
   if (n === 3) return 2;
-  return Math.min(10, n - 1);
+  return Math.min(6, n - 1);
 }
 
 export const BADGES = {

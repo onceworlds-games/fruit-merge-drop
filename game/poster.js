@@ -56,8 +56,10 @@ export async function runPoster(name) {
     await drawPoster(name);
   } catch (err) {
     console.error(err);
-    document.body.style.color = '#fff';
-    document.body.insertAdjacentHTML('beforeend', `<pre style="position:fixed;left:8px;top:8px;font:14px monospace">${String(err && err.stack).replace(/</g, '&lt;')}</pre>`);
+    const pre = document.createElement('pre');
+    pre.style.cssText = 'position:fixed;left:8px;top:8px;margin:0;font:14px monospace;color:#fff';
+    pre.textContent = String(err && err.stack);
+    document.body.append(pre);
   }
 }
 

@@ -41,7 +41,7 @@ async function boot() {
   } catch {}
 
   const layout = () => {
-    const pr = Math.min(ow?.settings?.pixelRatio?.(2) ?? window.devicePixelRatio ?? 1, 3);
+    const pr = ow?.settings?.pixelRatio ? ow.settings.pixelRatio(2) : Math.min(window.devicePixelRatio || 1, 2);
     const W = Math.max(200, window.innerWidth || document.documentElement.clientWidth || 390);
     const H = Math.max(200, window.innerHeight || document.documentElement.clientHeight || 844);
     R.resize(W, H, pr);
