@@ -58,8 +58,8 @@ export function createFx() {
   fx.setCallout = (text, sub, color) => {
     fx.callout = { text, sub, color, life: 0, max: 1.15 };
   };
-  fx.setBanner = (text, color, life = 1.8) => {
-    fx.banner = { text, color, life: 0, max: life };
+  fx.setBanner = (kind, color, life = 1.8) => {
+    fx.banner = { kind, color, life: 0, max: life };
   };
   fx.shake = (amount) => {
     if (fx.reduced) return;

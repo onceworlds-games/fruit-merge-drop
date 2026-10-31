@@ -216,6 +216,7 @@ export function createRenderer(canvas, fx) {
     const n = Math.max(6, Math.round(W / 46));
     const sw = W / n;
     const h = L.awn;
+    if (h < 8) return;
     const flat = h * 0.62;
     for (let i = 0; i < n; i++) {
       const col = i % 2 ? COL.cream : COL.red;
@@ -417,10 +418,9 @@ export function createRenderer(canvas, fx) {
     const g = view.game;
     const c = ctx;
     let top = -1;
-    for (let k = 0; k < KINDS; k++) if (g.made[k] || k <= g.biggest) top = k;
+    for (let k = 0; k < KINDS; k++) if (g.made[k]) top = k;
     for (let k = 0; k < KINDS; k++) {
       const cell = L.ladder.cells[k];
-      const made = k <= top && (g.made[k] || k === top || view.mode !== 'play' ? g.made[k] : g.made[k]);
       const lr = L.ladder.r * (0.46 + 0.54 * (k / 10));
       const pulse = fx.pulse[k];
       c.save();
@@ -433,9 +433,8 @@ export function createRenderer(canvas, fx) {
         c.strokeStyle = COL.brass;
         c.stroke();
       }
-      if (g.made[k] || (k === 0 && g.drops > 0)) drawFruit(c, k, cell.x, cell.y, lr * (1 + pulse * 0.45), 0.3 - k * 0.1);
+      if (g.made[k]) drawFruit(c, k, cell.x, cell.y, lr * (1 + pulse * 0.45), 0.3 - k * 0.1);
       else drawSilhouette(c, k, cell.x, cell.y, lr, '#1a0c06', 0.55);
-      void made;
       c.restore();
     }
     if (fx.banner) {
@@ -801,7 +800,7 @@ export function createRenderer(canvas, fx) {
     const pop = easeOutBack(Math.min(1, co.life / 0.2));
     const a = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1;
     const x = L.jx + (JAR.w / 2) * L.s;
-    const y = L.ry + 190 * L.s;
+    const y = L.ry + 120 * L.s;
     const size = Math.min(L.W * 0.13, 40 + L.s * 22, 78);
     c.save();
     c.globalAlpha = a;
@@ -832,10 +831,13 @@ export function createRenderer(canvas, fx) {
       cx = L.W / 2;
       top = L.awn + 14;
       maxW = L.W - 40;
-      maxH = L.ry - L.awn - 40;
+      maxH = L.ry + 150 * L.s - top;
     }
     maxW = Math.min(maxW, view.logoBox ? 900 : 420);
-    const lineH = Math.min(maxH / 3.15, maxW / 3.4, 104);
+    let lineH = Math.min(maxH / 3.15, 120);
+    c.font = `900 ${lineH * 1.04}px ${FONT}`;
+    const widest = Math.max(c.measureText('MERGE').width, c.measureText('DROP').width, c.measureText('FRUIT').width) + lineH * 0.35;
+    if (widest > maxW) lineH *= maxW / widest;
     const tIn = Math.min(1, view.titleT / 0.5);
     c.save();
     c.translate(cx, top + lineH * 1.55);
@@ -958,8 +960,8 @@ export function createRenderer(canvas, fx) {
     text(c, fmt(g.score), R.W / 2, sy, { size: fitSize(c, fmt(g.score), w - 60, small ? 54 : 74), weight: 900, color: COL.red });
     if (view.newBest) {
       c.save();
-      c.translate(x + w - 56, y + 82);
-      c.rotate(0.22);
+      c.translate(R.W / 2, sy + (small ? 36 : 56));
+      c.rotate(-0.06);
       c.fillStyle = COL.ink;
       rr(c, -52, -17 + 3, 104, 34, 8);
       c.fill();

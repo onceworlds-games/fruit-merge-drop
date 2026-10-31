@@ -110,6 +110,8 @@ export class Game {
     const b = this.world.add({ kind, r: radiusOf(kind), x: this.aimX, y: JAR.holdY, fresh: true });
     b.pop = 0.6;
     this.drops++;
+    this.made[kind] = true;
+    if (kind > this.biggest) this.biggest = kind;
     this.held = null;
     this.cooldown = DROP_COOLDOWN;
     this.queued = -99;

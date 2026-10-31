@@ -13,7 +13,7 @@ const params = new URLSearchParams(location.search);
 if (params.has('poster')) {
   import('./poster.js').then((m) => m.runPoster(params.get('poster')));
 } else {
-  boot().catch((err) => console.error(err));
+  boot().catch((err) => { console.error(err); const c = document.getElementById('cv').getContext('2d'); c.fillStyle = '#fff'; c.font = '12px monospace'; String(err.stack).split('\n').slice(0, 8).forEach((l, i) => c.fillText(l.slice(0, 60), 4, 100 + i * 14)); });
 }
 
 async function boot() {
@@ -42,10 +42,18 @@ async function boot() {
 
   const layout = () => {
     const pr = Math.min(ow?.settings?.pixelRatio?.(2) ?? window.devicePixelRatio ?? 1, 3);
-    R.resize(window.innerWidth, window.innerHeight, pr);
+    const W = Math.max(200, window.innerWidth || document.documentElement.clientWidth || 390);
+    const H = Math.max(200, window.innerHeight || document.documentElement.clientHeight || 844);
+    R.resize(W, H, pr);
+    try {
+      R.reserved = ow?.ui?.reserved || null; // the platform's menu and touch controls, in page pixels
+    } catch {}
   };
   layout();
   window.addEventListener('resize', layout);
+  try {
+    ow?.on?.('reserved', layout);
+  } catch {}
   try {
     document.fonts.load('900 40px Rubik');
     document.fonts.load('800 20px Rubik');
@@ -54,17 +62,21 @@ async function boot() {
   // ---- saves -----------------------------------------------------------------------------------------------------
   const store = { best: 0, games: 0, hint: false, badges: {} };
   let savedJar = null;
-  try {
-    const s = await ow?.save?.get?.('stats');
-    if (s && typeof s === 'object') {
-      store.best = Number.isFinite(s.best) ? Math.max(0, s.best) : 0;
-      store.games = Number.isFinite(s.games) ? s.games : 0;
-      store.hint = !!s.hint;
-      if (s.badges && typeof s.badges === 'object') store.badges = s.badges;
-    }
-    const j = await ow?.save?.get?.('jar');
-    if (j) savedJar = Game.restore(j) ? j : null;
-  } catch {}
+  const loadSaves = async () => {
+    try {
+      const st = await ow?.save?.get?.('stats');
+      if (st && typeof st === 'object') {
+        store.best = Number.isFinite(st.best) ? Math.max(0, st.best) : 0;
+        store.games = Number.isFinite(st.games) ? st.games : 0;
+        store.hint = !!st.hint;
+        if (st.badges && typeof st.badges === 'object') store.badges = st.badges;
+      }
+      const j = await ow?.save?.get?.('jar');
+      if (j && Game.restore(j)) savedJar = j;
+    } catch {}
+    view.best = store.best;
+    if (view.mode === 'title') view.hasSave = !!savedJar;
+  };
   const saveStats = () => {
     try {
       ow?.save?.set?.('stats', { best: store.best, games: store.games, hint: store.hint, badges: store.badges });
@@ -99,12 +111,12 @@ async function boot() {
     mode: 'title',
     game: null,
     t: 0,
-    best: store.best,
+    best: 0,
     shownScore: 0,
     clawX: JAR.w / 2,
     clawOpen: 0,
     readyT: 1,
-    hasSave: !!savedJar,
+    hasSave: false,
     hint: null,
     hintT: 0,
     titleT: 0,
@@ -177,14 +189,6 @@ async function boot() {
     sound.click();
   };
 
-  const toTitle = () => {
-    view.mode = 'title';
-    view.hasSave = !!savedJar;
-    view.titleT = 0;
-    view.game = demo;
-    setMusic(0.7);
-  };
-
   const pause = () => {
     if (view.mode !== 'play') return;
     view.mode = 'pause';
@@ -231,14 +235,14 @@ async function boot() {
           fx.float(`+${e.pts}`, e.x, e.y - t.r * 0.5, e.combo > 1 ? '#ffd24a' : '#fff3d6', 18 + k * 1.6, 0.9 + k * 0.03, 46);
           fx.shake(0.04 + k * 0.03);
           if (k >= 6) fx.bump(0.4 + (k - 6) * 0.15);
-          if (k >= 7) hitStop = Math.max(hitStop, 0.04);
+          if (k >= 7 && !fx.reduced) hitStop = Math.max(hitStop, 0.04);
           fx.scorePop = 1;
           sound.merge(k, e.combo);
           if (!seen[k]) {
             seen[k] = true;
-            if (!demoMode) {
+            if (!demoMode && k >= 3) {
               fx.pulse[k] = 1;
-              fx.setBanner(t.name, COL.brass);
+              fx.setBanner(k, COL.brass);
               sound.tier(k);
               fx.float(t.name.toUpperCase(), e.x, e.y - t.r - 14, '#ffd24a', 24, 1.5, 30);
             }
@@ -248,7 +252,7 @@ async function boot() {
             if (k >= 8) award('coconut');
             if (k === 10) {
               award('jackfruit');
-              slow = 0.8;
+              slow = fx.reduced ? 0 : 0.8;
               fx.confetti(e.x, e.y, 70, ['#c6e04a', '#ffd24a', '#ff7a3a', '#f7ead0', '#d63a2c']);
               fx.shake(0.6);
               fx.glimmer(0.6);
@@ -267,7 +271,7 @@ async function boot() {
           fx.bump(1);
           fx.glimmer(0.8);
           fx.setCallout('JACKFRUIT BURST', '+500', '#ffd24a');
-          slow = 1;
+          slow = fx.reduced ? 0 : 1;
           if (!demoMode) {
             sound.burst();
             award('jackfruit');
@@ -395,6 +399,7 @@ async function boot() {
     downOnButton = null;
     view.press = null;
     dragging = false;
+    if (e.pointerType !== 'mouse') view.hover = null;
   };
   canvas.addEventListener('pointerup', up);
   canvas.addEventListener('pointercancel', () => {
@@ -547,15 +552,22 @@ async function boot() {
     last = now;
     if (!(dt > 0)) return;
     dt = Math.min(dt, 0.1);
+    if (window.innerWidth && (window.innerWidth !== R.W || window.innerHeight !== R.H)) layout();
     try {
       update(dt);
       R.draw(view);
     } catch (err) {
       console.error(err);
+      if (params.has('debug')) { ctx2.fillStyle = '#fff'; ctx2.font = '12px monospace'; String(err.stack).split('\n').slice(0, 6).forEach((l, i) => ctx2.fillText(l, 4, 100 + i * 14)); }
     }
   }
+  const ctx2 = canvas.getContext('2d');
   setMusic(0.7);
   requestAnimationFrame(tick);
+  Promise.race([loadSaves(), new Promise((r) => setTimeout(r, 2500))]).then(() => {
+    // the platform's screenshot and playtest tools ask for a moment of play with ?autoplay=1
+    if (params.get('autoplay') === '1') setTimeout(() => startGame(false), 300);
+  });
   window.__fmd = { view, store }; // for debugging in the console
   void scoreBadges;
 }

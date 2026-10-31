@@ -12,7 +12,7 @@ export function computeLayout(W, H) {
   const L = { W, H, wide, wall };
   if (!wide) {
     const awn = clamp(H * 0.07, 40, 64);
-    const hud = clamp(H * 0.115, 76, 108);
+    const hud = Math.max(clamp(H * 0.115, 76, 108), 148 - awn);
     const board = clamp(H * 0.09, 56, 80);
     const counter = clamp(H * 0.02, 12, 20);
     const sW = (W - 20) / (JAR.w + 2 * wall);
@@ -34,10 +34,11 @@ export function computeLayout(W, H) {
     const signW = clamp(W * 0.44, 150, 230);
     const signH = clamp(hudH - 12, 70, 120);
     const sideW = (W - signW) / 2 - 18;
-    L.score = { x: (W - signW) / 2, y: awn + (hudH - signH) / 2 + 2, w: signW, h: signH };
+    L.score = { x: (W - signW) / 2, y: Math.max(awn + (hudH - signH) / 2 + 2, 64), w: signW, h: signH };
     const trayW = clamp(sideW, 60, 96);
-    L.next = { x: 12, y: L.score.y + 22, w: trayW, h: signH - 22, label: 'NEXT' };
-    L.then = { x: W - 12 - trayW, y: L.score.y + 22, w: trayW, h: signH - 22, label: 'THEN' };
+    const ty = Math.max(L.score.y + 22, 86);
+    L.next = { x: 12, y: ty, w: trayW, h: signH - 22, label: 'NEXT' };
+    L.then = { x: W - 12 - trayW, y: ty, w: trayW, h: signH - 22, label: 'THEN' };
     const pb = 48;
     L.pause = { x: W - pb - 10, y: Math.max(4, awn * 0.5 - pb * 0.5), w: pb, h: pb };
     // ladder on the front board: one row

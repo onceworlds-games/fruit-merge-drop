@@ -3,9 +3,9 @@
 
 export const JAR = {
   w: 260,
-  h: 400,
+  h: 340,
   corner: 64, // radius of the rounded bottom corners (larger than the biggest fruit)
-  dangerY: 78, // the line: a settled fruit whose top is above it starts the countdown
+  dangerY: 74, // the line: a settled fruit whose top is above it starts the countdown
   holdY: -30, // centre of the fruit hanging in the claw
   railY: -66, // the claw's rail
   wall: 12, // glass thickness (drawing only)
