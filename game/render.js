@@ -977,7 +977,7 @@ export function createRenderer(canvas, fx) {
       text(c, `BEST ${fmt(view.best)}`, R.W / 2, sy + (small ? 34 : 54), { size: 22, weight: 800, color: '#6b4a38' });
     }
     // three stats
-    const ry = y + (small ? 176 : 232);
+    const ry = y + (small ? 150 : 232);
     const cw = (w - 40) / 3;
     const stats = [
       ['BIGGEST', TIERS[g.biggest].name, g.biggest],
@@ -988,13 +988,14 @@ export function createRenderer(canvas, fx) {
       const cx = x + 20 + cw * (i + 0.5);
       text(c, stats[i][0], cx, ry, { size: 16, weight: 800, color: '#8a6a50' });
       if (stats[i][2] >= 0) {
-        drawFruit(c, stats[i][2], cx, ry + 38, Math.min(26, 11 + stats[i][2] * 1.6), 0.3);
-        text(c, stats[i][1], cx, ry + 82, { size: fitSize(c, stats[i][1], cw - 6, 20, 800), weight: 800, color: COL.ink });
+        drawFruit(c, stats[i][2], cx, ry + (small ? 30 : 38), Math.min(small ? 20 : 26, 11 + stats[i][2] * 1.6), 0.3);
+        text(c, stats[i][1], cx, ry + (small ? 62 : 82), { size: fitSize(c, stats[i][1], cw - 6, 20, 800), weight: 800, color: COL.ink });
       } else {
-        text(c, stats[i][1], cx, ry + 44, { size: fitSize(c, stats[i][1], cw - 6, 38), weight: 900, color: COL.ink });
+        text(c, stats[i][1], cx, ry + (small ? 36 : 44), { size: fitSize(c, stats[i][1], cw - 6, 38), weight: 900, color: COL.ink });
       }
     }
-    button(view, 'retry', x + 24, y + h - 24 - 76, w - 48, 76, 'RETRY', 'primary', { size: 34 });
+    const rb = small ? 60 : 76;
+    button(view, 'retry', x + 24, y + h - 22 - rb, w - 48, rb, 'RETRY', 'primary', { size: small ? 30 : 34 });
     c.restore();
   }
 

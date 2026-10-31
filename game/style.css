@@ -1,3 +1,11 @@
+/* Rubik (latin, variable 600-900), SIL Open Font License: see fonts/OFL.txt */
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+  src: url(fonts/Rubik-latin.woff2) format('woff2');
+}
 html, body {
   margin: 0;
   height: 100%;

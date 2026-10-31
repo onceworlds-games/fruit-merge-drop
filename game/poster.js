@@ -72,10 +72,8 @@ async function drawPoster(name) {
   canvas.style.cssText = 'position:fixed;inset:0';
   document.body.append(canvas);
   try {
-    await document.fonts.load('900 80px Rubik');
-    await document.fonts.load('800 30px Rubik');
+    await Promise.race([Promise.all([document.fonts.load('900 80px Rubik'), document.fonts.load('800 30px Rubik')]), new Promise((r) => setTimeout(r, 4000))]);
   } catch {}
-  await document.fonts.ready;
 
   if (name === 'icon') return icon(canvas, W, H);
   if (name.startsWith('badge-')) return badge(canvas, W, H, name.slice(6));

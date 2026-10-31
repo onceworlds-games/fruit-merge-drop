@@ -54,6 +54,7 @@ async function boot() {
   try {
     ow?.on?.('reserved', layout);
   } catch {}
+  // The font is the game's own file; the canvas redraws every frame, so text simply switches over when it arrives.
   try {
     document.fonts.load('900 40px Rubik').catch(() => {});
     document.fonts.load('800 20px Rubik').catch(() => {});
@@ -134,16 +135,9 @@ async function boot() {
     demoBot = createBot(demoSeed, 0.8);
     demo.drops = 5;
     demo.setAim(JAR.w / 2);
-    // start with a few fruit already settled so the title is never an empty jar
-    for (let i = 0; i < 14; i++) {
-      if (demo.ready) {
-        demo.setAim(demoBot.choose(demo));
-        demo.drop();
-      }
-      for (let f = 0; f < 36; f++) demo.step(1 / 60);
-    }
-    demo.events.length = 0;
+    demoFast = 420; // fast-forwarded a few frames at a time once the title is on screen, never in one blocking go
   };
+  let demoFast = 0;
   newDemo();
   view.game = demo;
   let demoWait = 0;
@@ -181,6 +175,7 @@ async function boot() {
     timeScale = 1;
     hitStop = 0;
     view.hasSave = false;
+    pendingDrop = 0;
     startAudio();
     setMusic(1);
     try {
@@ -331,6 +326,16 @@ async function boot() {
     g.setAim(toWorldX(R.L, px));
   };
 
+  // A drop asked for while the claw is still reloading waits up to 0.8 s of real time, so slow frames never eat a click.
+  let pendingDrop = 0;
+  const tryDrop = () => {
+    const g = view.game;
+    if (g.ready) {
+      g.drop();
+      pendingDrop = 0;
+    } else pendingDrop = performance.now();
+  };
+
   const activate = (id) => {
     startAudio();
     switch (id) {
@@ -367,6 +372,7 @@ async function boot() {
   };
 
   canvas.addEventListener('pointerdown', (e) => {
+    frozen = false; // a touch in the game means the platform's menu is closed, whatever the platform told us
     startAudio();
     e.preventDefault();
     try {
@@ -394,7 +400,7 @@ async function boot() {
       if (id === downOnButton) activate(id);
     } else if (dragging && view.mode === 'play' && !frozen && e.type === 'pointerup') {
       aimAt(e.clientX);
-      view.game.drop();
+      tryDrop();
     }
     downOnButton = null;
     view.press = null;
@@ -413,6 +419,7 @@ async function boot() {
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (['ArrowLeft', 'ArrowRight', 'ArrowDown', ' ', 'Enter', 'Escape'].includes(e.key)) e.preventDefault();
     startAudio();
+    frozen = false;
     if (e.repeat && k !== 'ArrowLeft' && k !== 'ArrowRight') return;
     const m = view.mode;
     if (k === 'ArrowLeft' || k === 'a') keys.add('l');
@@ -421,7 +428,7 @@ async function boot() {
       if (k === 'Enter' || k === ' ') activate('play');
     } else if (m === 'play') {
       if (k === ' ' || k === 'Enter' || k === 'ArrowDown' || k === 's') {
-        if (!frozen) view.game.drop();
+        if (!frozen) tryDrop();
       } else if (k === 'p' || k === 'Escape') pause();
     } else if (m === 'pause') {
       if (k === 'p' || k === 'Escape' || k === ' ' || k === 'Enter') resume();
@@ -470,7 +477,16 @@ async function boot() {
     const g = view.game;
     if (view.mode === 'title') {
       view.titleT += dt;
-      // the live jar plays itself
+      // the live jar plays itself; a fresh one is first played ahead quickly, 14 steps a frame
+      for (let k = 0; k < 14 && demoFast > 0; k++, demoFast--) {
+        if (demo.ready) {
+          demo.setAim(demoBot.choose(demo));
+          demo.drop();
+          view.clawX = demo.aimX;
+        }
+        demo.step(STEP);
+        demo.events.length = 0;
+      }
       demoWait -= dt;
       if (demo.ready && demoWait <= 0) {
         const x = demoBot.choose(demo);
@@ -489,6 +505,7 @@ async function boot() {
         handleEvents(demo, true);
         if (demo.over || demo.world.bodies.length > 44) newDemo();
       }
+      acc = Math.min(acc, STEP * 2);
       view.clawOpen = Math.max(0, view.clawOpen - dt * 3);
       view.readyT = Math.min(1, view.readyT + dt * 4);
       view.game = demo;
@@ -503,11 +520,19 @@ async function boot() {
       if (hitStop <= 0) {
         acc += dt * timeScale;
         let n = 0;
-        while (acc >= STEP && n++ < 5) {
+        while (acc >= STEP && n++ < 9) {
           acc -= STEP;
           g.step(STEP);
           handleEvents(g, false);
           if (view.mode !== 'play') break;
+        }
+        acc = Math.min(acc, STEP * 2); // a slow frame never builds up a backlog to fast-forward through later
+      }
+      if (pendingDrop) {
+        if (performance.now() - pendingDrop >= 800) pendingDrop = 0;
+        else if (g.ready) {
+          g.drop();
+          pendingDrop = 0;
         }
       }
       const dir = (keys.has('r') ? 1 : 0) - (keys.has('l') ? 1 : 0);
@@ -551,7 +576,7 @@ async function boot() {
     let dt = (now - last) / 1000;
     last = now;
     if (!(dt > 0)) return;
-    dt = Math.min(dt, 0.1);
+    dt = Math.min(dt, 0.15);
     if (window.innerWidth && (window.innerWidth !== R.W || window.innerHeight !== R.H)) layout();
     try {
       update(dt);
