@@ -55,8 +55,8 @@ async function boot() {
     ow?.on?.('reserved', layout);
   } catch {}
   try {
-    document.fonts.load('900 40px Rubik');
-    document.fonts.load('800 20px Rubik');
+    document.fonts.load('900 40px Rubik').catch(() => {});
+    document.fonts.load('800 20px Rubik').catch(() => {});
   } catch {}
 
   // ---- saves -----------------------------------------------------------------------------------------------------
