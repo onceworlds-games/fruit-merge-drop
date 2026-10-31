@@ -1,0 +1,26 @@
+{
+  "slug": "fruit-merge-drop",
+  "name": "Fruit Merge Drop",
+  "description": "Drop fruit, merge matching pairs, grow a jackfruit. Don't overflow the jar.",
+  "dir": "game",
+  "productionBranch": "main",
+  "genre": "Puzzle",
+  "icon": "store/icon.png",
+  "thumbnails": ["store/thumb-1.png", "store/thumb-2.png", "store/thumb-3.png"],
+  "controls": [
+    { "keys": ["Mouse"], "action": "Move to aim, click to drop" },
+    { "keys": ["Touch"], "action": "Drag to aim, let go to drop" },
+    { "keys": ["Left", "Right"], "action": "Move the claw" },
+    { "keys": ["A", "D"], "action": "Move the claw" },
+    { "keys": ["Space", "Down", "Enter"], "action": "Drop the fruit" },
+    { "keys": ["P", "Esc"], "action": "Pause" }
+  ],
+  "badges": [
+    { "id": "first-mango", "name": "Ripe", "description": "Make a Mango.", "icon": "store/badge-first-mango.png" },
+    { "id": "coconut", "name": "Hard Shell", "description": "Make a Coconut.", "icon": "store/badge-coconut.png" },
+    { "id": "jackfruit", "name": "The Big One", "description": "Make a Jackfruit.", "icon": "store/badge-jackfruit.png" },
+    { "id": "combo-5", "name": "Juicy Chain", "description": "Chain five merges in one combo.", "icon": "store/badge-combo-5.png" },
+    { "id": "score-3000", "name": "Fruit Stand", "description": "Score 3,000 in one game.", "icon": "store/badge-score-3000.png" },
+    { "id": "score-8000", "name": "Orchard Owner", "description": "Score 8,000 in one game.", "icon": "store/badge-score-8000.png" }
+  ]
+}
